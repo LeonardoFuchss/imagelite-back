@@ -1,0 +1,66 @@
+version: '3'
+# Subindo 2 containers (docker compose)
+
+services: # 1
+  mydatabase:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: imagelite
+    ports:
+      - '5432' # Porta de acesso ao container
+    volumes:
+      - ./data:/var/lib/postgresql/data
+    networks:
+      - imagelitenetworks
+
+
+  pgadmin: # 2
+   image: dpage/pgadmin4:8.6
+   restart: always
+   environment:
+     PGADMIN_DEFAULT_PASSWORD: admin
+     PGADMIN_DEFAULT_EMAIL: admin@admin.com
+   ports:
+     - '15432:80' # Porta de acesso ao container
+   depends_on:
+     - mydatabase # pgadmin DEPENDE do container mydatabase.
+   networks:
+    - imagelitenetworks
+
+# Subindo contâiner da aplicação na stack do docker
+  sbootapp:
+    build:
+      dockerfile: Dockerfile
+      context: ./imageliteapi
+    container_name: imageliteapi
+    depends_on:
+     - mydatabase
+    ports:
+      - '8080:8080'
+    environment: # Referenciando a variável de ambiente do contâiner (POSTGRES_HOST) para o serviço mydatabase para o spring em produção ter acesso ao banco de dados
+      - "POSTGRES_HOST=mydatabase"
+    networks:
+      - imagelitenetworks
+
+  app:
+    build:
+      dockerfile: Dockerfile
+      context: ./imagelite
+    container_name: imageliteapp
+    restart: on-failure
+    depends_on:
+     - sbootapp
+    ports: 
+      - '3000:3000'
+    networks:
+      - imagelitenetworks
+    expose: 
+      - 3000        
+
+# Network para ligar os contâiners
+networks:
+  imagelitenetworks:
+    driver: bridge

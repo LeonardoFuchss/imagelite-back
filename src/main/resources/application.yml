@@ -1,0 +1,25 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/imagelite # Conectando o spring ao container mydatabase através da porta 5433
+    username: postgres
+    password: postgres
+  jpa: # Definições do jpa
+    database: POSTGRESQL
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  servlet:
+    multipart: # Configurando o tamanho aceito de imagem
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+    # Resumo simples: Sempre que eu utilizar os recursos do jpa, vai ser mapeado para o container mydatabase através da porta 5433 e ser levado até as tabelas no pgadmin
+
+---
+# ambiente de produção
+spring:
+  config:
+    activate:
+      on-profile: production
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:5432/imagelite
